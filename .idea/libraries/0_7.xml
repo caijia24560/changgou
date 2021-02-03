@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="0.7">
+    <CLASSES>
+      <root url="file://C:/MavenRepository/io/jsonwebtoken/jjwt/0.7.0" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://C:/MavenRepository/io/jsonwebtoken/jjwt/0.7.0" />
+    </SOURCES>
+    <jarDirectory url="file://C:/MavenRepository/io/jsonwebtoken/jjwt/0.7.0" recursive="false" />
+    <jarDirectory url="file://C:/MavenRepository/io/jsonwebtoken/jjwt/0.7.0" recursive="false" type="SOURCES" />
+  </library>
+</component>

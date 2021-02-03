@@ -1,0 +1,33 @@
+server:
+  port: 18089
+spring:
+  application:
+    name: page
+  rabbitmq:
+    host: 192.168.119.128
+  main:
+    allow-bean-definition-overriding: true # 当遇到同样名字的时候,是否允许覆盖注册
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+    feign-registry: true
+  instance:
+    prefer-ip-address: true
+feign:
+  hystrix:
+    enabled: false
+  client:
+    config:
+      default:  # 配置全局的feign的调用时间, 如果有指定的服务配置,默认的配置不会生效
+        connectTimeout: 600000 #指定的是消费者连接服务器提供者的连接超时时间,是否能够连接(单位毫秒)
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          # 如果enabled设置为false 则请求超时时间交给ribbon控制
+          enabled: true
+        isolation:
+          strategy: SEMAPHORE
+pagepath: D:\changgou\changgou\changgou-parent\changgou-web\changgou-web-search\src\main\resources\templates

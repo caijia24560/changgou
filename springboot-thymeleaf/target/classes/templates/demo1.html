@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--声明thyemleaf的标签-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <!--/*@thymesVar id="message" type="ch"*/-->
+    啊哈哈时候就是导航说的!!!!<div th:text="${message}"></div>
+    <div>
+        <form th:action="@{/hello}">
+            <button>提交</button>>
+        </form>
+    </div>
+
+    <div th:each="User : ${list}">
+        <div th:text="${User.getName()}"></div>
+        <div th:text="${User.getAddress()}"></div>
+        <div th:text="${User.getId()}"></div>
+    </div>
+
+    <table>
+        <tr th:each="User, UserSta:${list}">
+            <td th:text="${UserSta.index}"></td>
+            <td th:text="${User.getName()}"></td>
+            <td th:text="${User.getAddress()}"></td>
+            <td th:text="${User.getId()}"></td>
+        </tr>
+    </table>
+    <div>
+        <span th:include="footer::copy"></span>
+    </div>
+
+</body>
+</html>
