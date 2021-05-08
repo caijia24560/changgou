@@ -1,14 +1,5 @@
 package com.changgou.goods.service.impl;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.alibaba.fastjson.JSON;
 import com.changgou.goods.dao.BrandMapper;
 import com.changgou.goods.dao.CategoryMapper;
@@ -18,9 +9,15 @@ import com.changgou.goods.pojo.*;
 import com.changgou.goods.service.SpuService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
-import com.changgou.entity.IdWorker;
+import entity.IdWorker;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /****
  * @Author:admin
@@ -45,56 +42,6 @@ public class SpuServiceImpl implements SpuService {
     @Autowired
     private BrandMapper brandMapper;
 
-    /**
-     * 添加商品
-     * @param goods
-     */
-    @Override
-    public void saveGoods(Goods goods){
-        //spu 一个
-        Spu spu = goods.getSpu();
-        //判断id是否为空
-        if(spu.getId() == null){
-            //为空 则增加
-            spu.setId(idWorker.nextId());
-            spuMapper.insertSelective(spu);
-        } else {
-            //修改
-            spuMapper.updateByPrimaryKeySelective(spu);
-            //删除之前的sku
-            Sku sku = new Sku();
-            sku.setSpuId(spu.getId());
-            skuMapper.delete(sku);
-        }
-
-        //查询3级分类
-        Category category = categoryMapper.selectByPrimaryKey(spu.getId());
-        //查询品牌信息
-        Brand brand = brandMapper.selectByPrimaryKey(spu.getBrandId());
-        //sku 多个
-        List<Sku> skuList = goods.getSkuList();
-        for(Sku sku : skuList){
-            sku.setSpuId(idWorker.nextId());
-            String name = spu.getName();
-            if(sku.getSpec() != null){
-                //将spec转成Map
-                Map<String,String> specMap = JSON.parseObject(sku.getSpec(), Map.class);
-                for(Entry<String, String> entry : specMap.entrySet()){
-                    name += "  "+entry.getValue();
-                }
-            }
-            sku.setName(name);
-            sku.setCreateTime(new Date());
-            sku.setUpdateTime(new Date());
-            sku.setSpuId(spu.getId());
-            sku.setCategoryId(spu.getCategory3Id());
-            sku.setCategoryName(category.getName());
-            sku.setBrandName(brand.getName());
-
-
-        }
-
-    }
 
     /**
      * Spu条件+分页查询
@@ -451,41 +398,6 @@ public class SpuServiceImpl implements SpuService {
         criteria.andEqualTo("isDelete","1");
         spuMapper.updateByExampleSelective(data,exmaple);
 // spuMapper.updateByPrimaryKeySelective(spu);//根据主键来进行更新  update set name=? where id=?
-    }
-
-    /**
-     * 根据spuId查询商品
-     * @param spuId
-     * @return
-     */
-    @Override
-    public Goods findBySpuId(Integer spuId){
-        Goods goods = new Goods();
-        Spu spu = spuMapper.selectByPrimaryKey(spuId);
-        Sku sku = new Sku();
-        sku.setSpuId(Long.valueOf(spuId));
-        List<Sku> skuList = skuMapper.select(sku);
-
-        goods.setSpu(spu);
-        goods.setSkuList(skuList);
-        return goods;
-    }
-
-    /**
-     * 商品审核
-     * @param spuId
-     */
-    @Override
-    public void audit(Integer spuId){
-        //查询商品
-        Spu spu = spuMapper.selectByPrimaryKey(spuId);
-        if("1".equalsIgnoreCase(spu.getIsDelete())){
-            throw new RuntimeException("不能对已经删除的商品进行审核");
-        }
-        //判断商品审核条件
-        spu.setStatus("1");
-        spu.setIsMarketable("1");
-        spuMapper.updateByPrimaryKeySelective(spu);
     }
 
 

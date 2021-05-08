@@ -1,16 +1,16 @@
 package com.changgou.goods.controller;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import com.changgou.goods.pojo.Para;
 import com.changgou.goods.service.ParaService;
 import com.github.pagehelper.PageInfo;
+import entity.Result;
+import entity.StatusCode;
 
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
+import org.apache.ibatis.annotations.ResultType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /****
  * @Author:admin

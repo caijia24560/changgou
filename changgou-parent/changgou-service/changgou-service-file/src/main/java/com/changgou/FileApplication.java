@@ -6,13 +6,19 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 
 /**
- * @author caijia
- * @Date 2020年11月20日 15:52:00
+ * 描述
+ *
+ * @author 三国的包子
+ * @version 1.0
+ * @package com.changgou *
+ * @since 1.0
  */
-@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)//排除数据库自动加载
+//排除掉数据库类的自动配置
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @EnableEurekaClient
-public class FileApplication{
-    public static void main(String[] args){
+public class FileApplication {
+
+    public static void main(String[] args) {
         SpringApplication.run(FileApplication.class, args);
     }
 }

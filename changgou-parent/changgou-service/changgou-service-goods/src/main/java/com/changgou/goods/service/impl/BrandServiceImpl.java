@@ -1,17 +1,14 @@
 package com.changgou.goods.service.impl;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.changgou.goods.dao.BrandMapper;
 import com.changgou.goods.pojo.Brand;
 import com.changgou.goods.service.BrandService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
+import java.util.List;
 /****
  * @Author:admin
  * @Description:Brand业务层接口实现类

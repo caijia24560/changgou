@@ -1,18 +1,16 @@
 package com.changgou.content.service.impl;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.changgou.content.dao.ContentMapper;
 import com.changgou.content.pojo.Content;
 import com.changgou.content.service.ContentService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
+
+import java.util.List;
 
 /****
  * @Author:admin
@@ -80,7 +78,7 @@ public class ContentServiceImpl implements ContentService {
         Example example=new Example(Content.class);
         Example.Criteria criteria = example.createCriteria();
         if(content!=null){
-            //
+            // 
             if(!StringUtils.isEmpty(content.getId())){
                     criteria.andEqualTo("id",content.getId());
             }

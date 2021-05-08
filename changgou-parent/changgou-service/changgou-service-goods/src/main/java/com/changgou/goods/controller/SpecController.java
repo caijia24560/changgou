@@ -1,15 +1,13 @@
 package com.changgou.goods.controller;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import com.changgou.goods.pojo.Spec;
 import com.changgou.goods.service.SpecService;
 import com.github.pagehelper.PageInfo;
+import entity.Result;
+import entity.StatusCode;
 
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /****
  * @Author:admin
@@ -131,9 +129,11 @@ public class SpecController {
      * 根据商品分类的ID 查询该分类对应的 规格的列表
      *
      */
+
+
     @GetMapping("/category/{id}")
     public Result<List<Spec>> findByCategoryId(@PathVariable(name="id") Integer id){
         List<Spec> specList = specService.findByCategoryId(id);
-        return new Result<>(true, StatusCode.OK, "查询规格的列表成功", specList);
+        return new Result<List<Spec>>(true,StatusCode.OK,"查询规格的列表成功",specList);
     }
 }

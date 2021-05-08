@@ -3,8 +3,8 @@ package com.changgou.content.controller;
 import com.changgou.content.pojo.Content;
 import com.changgou.content.service.ContentService;
 import com.github.pagehelper.PageInfo;
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
+import entity.Result;
+import entity.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

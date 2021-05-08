@@ -1,16 +1,14 @@
 package com.changgou.goods.controller;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import com.changgou.goods.pojo.Goods;
 import com.changgou.goods.pojo.Spu;
 import com.changgou.goods.service.SpuService;
 import com.github.pagehelper.PageInfo;
+import entity.Result;
+import entity.StatusCode;
 
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /****
  * @Author:admin
@@ -26,8 +24,6 @@ public class SpuController {
     @Autowired
     private SpuService spuService;
 
-
-
     /***
      * Spu分页条件搜索实现
      * @param spu
@@ -39,7 +35,7 @@ public class SpuController {
     public Result<PageInfo> findPage(@RequestBody(required = false)  Spu spu, @PathVariable  int page, @PathVariable  int size){
         //调用SpuService实现分页条件查询Spu
         PageInfo<Spu> pageInfo = spuService.findPage(spu, page, size);
-        return new Result<>(true,StatusCode.OK,"查询成功",pageInfo);
+        return new Result(true,StatusCode.OK,"查询成功",pageInfo);
     }
 
     /***
@@ -86,7 +82,7 @@ public class SpuController {
      * @return
      */
     @PutMapping(value="/{id}")
-    public Result update(@RequestBody  Spu spu,@PathVariable("id") Long id){
+    public Result update(@RequestBody  Spu spu,@PathVariable Long id){
         //设置主键值
         spu.setId(id);
         //调用SpuService实现修改Spu
@@ -112,7 +108,7 @@ public class SpuController {
      * @return
      */
     @GetMapping("/{id}")
-    public Result<Spu> findById(@PathVariable("id") Long id){
+    public Result<Spu> findById(@PathVariable Long id){
         //调用SpuService实现根据主键查询Spu
         Spu spu = spuService.findById(id);
         return new Result<Spu>(true,StatusCode.OK,"查询成功",spu);

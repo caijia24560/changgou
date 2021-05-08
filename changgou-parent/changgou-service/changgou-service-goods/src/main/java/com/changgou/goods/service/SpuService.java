@@ -1,18 +1,14 @@
 package com.changgou.goods.service;
-import java.util.List;
-
 import com.changgou.goods.pojo.Goods;
 import com.changgou.goods.pojo.Spu;
 import com.github.pagehelper.PageInfo;
-
+import java.util.List;
 /****
  * @Author:admin
  * @Description:Spu业务层接口
  * @Date 2019/6/14 0:16
  *****/
 public interface SpuService {
-
-    void saveGoods(Goods goods);
 
     /***
      * Spu多条件分页查询
@@ -89,17 +85,4 @@ public interface SpuService {
 
 
     void restoreSpu(Long id);
-
-    /**
-     * 根据spuI查询商品
-     * @param spuId
-     * @return
-     */
-    Goods findBySpuId(Integer spuId);
-
-    /**
-     * 商品审核
-     * @param spuId
-     */
-    void audit(Integer spuId);
 }

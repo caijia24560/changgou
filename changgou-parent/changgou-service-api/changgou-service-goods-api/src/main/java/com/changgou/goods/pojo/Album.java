@@ -1,8 +1,7 @@
 package com.changgou.goods.pojo;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
+import java.io.Serializable;
 
 /****
  * @Author:admin

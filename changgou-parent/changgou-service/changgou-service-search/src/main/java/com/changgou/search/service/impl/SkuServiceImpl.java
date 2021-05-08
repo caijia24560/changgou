@@ -1,48 +1,49 @@
 package com.changgou.search.service.impl;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang.StringUtils;
+import com.alibaba.fastjson.JSON;
+import com.changgou.goods.feign.SkuFeign;
+import com.changgou.goods.pojo.Sku;
+import com.changgou.search.dao.SkuEsMapper;
+import com.changgou.search.pojo.SkuInfo;
+import com.changgou.search.service.SearchResultMapperImpl;
+import com.changgou.search.service.SkuService;
+import entity.Result;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.StringTerms.Bucket;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder.Field;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
-import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.SearchResultMapper;
 import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
-import org.springframework.data.elasticsearch.core.aggregation.impl.AggregatedPageImpl;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import com.alibaba.fastjson.JSON;
-import com.changgou.goods.feign.SkuFeign;
-import com.changgou.goods.pojo.Sku;
-import com.changgou.search.dao.SkuEsMapper;
-import com.changgou.search.pojo.SkuInfo;
-import com.changgou.search.service.SkuService;
-
-import com.changgou.entity.Result;
+import javax.swing.*;
+import java.util.*;
 
 /**
- * @author caijia
- * @Date 2020年12月07日 16:17:00
+ * 描述
+ *
+ * @author www.itheima.com
+ * @version 1.0
+ * @package com.changgou.search.service.impl *
+ * @since 1.0
  */
 @Service
-public class SkuServiceImpl implements SkuService{
+public class SkuServiceImpl implements SkuService {
+
 
     @Autowired
     private SkuFeign skuFeign;
@@ -50,333 +51,209 @@ public class SkuServiceImpl implements SkuService{
     @Autowired
     private SkuEsMapper skuEsMapper;
 
-    //elasticsearchTemplate实现索引库的CRUD
     @Autowired
     private ElasticsearchTemplate elasticsearchTemplate;
 
+
     @Override
-    public void importData(){
+    public void importEs() {
         //1.调用 goods微服务的fegin 查询 符合条件的sku的数据
-        Result<List<Sku>> skuResult = skuFeign.findAll();
+        Result<List<Sku>> skuResult = skuFeign.findByStatus("1");
         List<Sku> data = skuResult.getData();//sku的列表
-        List<Sku> skus = data.stream().filter(sku -> sku.getStatus().equals("1")).collect(Collectors.toList());
         //将sku的列表 转换成es中的skuinfo的列表
-        List<SkuInfo> skuInfos = JSON.parseArray(JSON.toJSONString(skus), SkuInfo.class);
-        for(SkuInfo skuInfo : skuInfos){
+        List<SkuInfo> skuInfos = JSON.parseArray(JSON.toJSONString(data), SkuInfo.class);
+        for (SkuInfo skuInfo : skuInfos) {
             //获取规格的数据  {"电视音响效果":"立体声","电视屏幕尺寸":"20英寸","尺码":"165"}
 
             //转成MAP  key: 规格的名称  value:规格的选项的值
             Map<String, Object> map = JSON.parseObject(skuInfo.getSpec(), Map.class);
             skuInfo.setSpecMap(map);
         }
+
+
         // 2.调用spring data elasticsearch的API 导入到ES中
         skuEsMapper.saveAll(skuInfos);
-
     }
 
+
     /**
-     * 条件搜索
+     *
      * @param searchMap
+     * key:
+     *      category     商品分类的过滤查询
+     *
+     *      brand        商品品牌的过滤查询   TCL
+     *
+     *      spec_规格的名称   value  规格的值      规格相关
+     *
+     *      price           value 价格区间的字符串 0-500   3000-*
+     *
+     *
+     *      pageNum   当前的页码
+     *      pageSize  不用传递   (写死)
+     *
+     *
+     *      sortField  要排序的字段  price
+     *      sortRule   要排序的规则 (ASC DESC)
+     *
+     *
      * @return
      */
+
     @Override
-    public Map<String, Object> search(Map<String, String> searchMap){
+    public Map search(Map<String, String> searchMap) {
+        //1.获取到关键字
+        String keywords = searchMap.get("keywords");
 
-        handlerSearchMap(searchMap);
-
-        NativeSearchQueryBuilder builder = getNativeSearchQueryBuilder(searchMap);
-
-        Map<String, Object> resultMap = searchList(builder);
-
-        // //判断用户是否选择了分类和品牌,选择后不需要显示此行
-        // if(resultMap != null){
-        //     //分类分组查询
-        //     if(StringUtils.isEmpty(searchMap.get("category"))){
-        //         List<String> categoryList = searchCategoeyList(builder);
-        //         resultMap.put("categoryList", categoryList);
-        //     }
-        //     //品牌分类分组查询
-        //     if(StringUtils.isEmpty(searchMap.get("brand"))){
-        //         List<String> brandList = searchBrandList(builder);
-        //         resultMap.put("brandList", brandList);
-        //     }
-        // }
-        // //组装一下规格数据
-        // HashMap<String, Set<String>> specList = searchSpecList(builder);
-        // resultMap.put("specList", specList);
-
-        //分组搜索实现
-        Map<String, Object> searchGroup = searchGroup(builder, searchMap);
-        resultMap.putAll(searchGroup);
-
-        return resultMap;
-    }
-
-    /**
-     * 处理规格有"+"号的搜索条件
-     * @param searchMap
-     */
-    public void handlerSearchMap(Map<String, String> searchMap){
-        if(searchMap != null){
-            for(Entry<String, String> entry : searchMap.entrySet()){
-                if(entry.getKey().startsWith("spec_")){
-                    entry.setValue(entry.getValue().replace("+", "%2B"));
-                }
-            }
+        //2.判断是否为空 如果 为空 给一个默认 值:华为
+        if (StringUtils.isEmpty(keywords)) {
+            keywords = "华为";
         }
-    }
+        //3.创建 查询构建对象
+        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        //4.设置 查询的条件
 
-    /**
-     * 搜索结果集封装
-     * @param builder
-     * @return
-     */
-    public Map<String, Object> searchList(NativeSearchQueryBuilder builder){
-        //设置高亮显示
-        Field field = new Field("name"); //指定高亮域
-        //拼html显示颜色
-        field.preTags("<em style=\"color:yellow;\">");
-        field.postTags("</em>");
-        //碎片长度  关键词数据的长度
-        field.fragmentSize(100);
-        builder.withHighlightFields(field);
+        // 4.1 商品分类的列表展示: 按照商品分类的名称来分组
+        //terms  指定分组的一个别名
+        //field 指定要分组的字段名
+        //size 指定查询结果的数量 默认是10个
+        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuCategorygroup").field("categoryName").size(50));
 
-        // AggregatedPage<SkuInfo> page = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
-        AggregatedPage<SkuInfo> page = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class, new SearchResultMapper(){
-            @Override
-            public <T> AggregatedPage<T> mapResults(SearchResponse response, Class<T> clazz, Pageable pageable){
-                //储存所有转换后的高亮数据对象
-                List<T> list = new ArrayList<>();
-                for(SearchHit hit : response.getHits()){
-                    //获取非高亮数据
-                    SkuInfo skuInfo = JSON.parseObject(hit.getSourceAsString(), SkuInfo.class);
-                    //分析结果集数据,获取高亮数据 -> 只有某个域的高亮数据
-                    HighlightField highlightField = hit.getHighlightFields().get("name");
-                    if(highlightField != null && highlightField.getFragments() != null){
-                        //非高亮数据中指定的域替换成高亮数据
-                        Text[] texts = highlightField.getFragments();
-                        StringBuilder stringBuilder = new StringBuilder();
-                        for(Text text : texts){
-                            stringBuilder.append(text.toString());
-                        }
-                        //非高亮数据中指定的域替换成高亮数据
-                        skuInfo.setName(stringBuilder.toString());
-                    }
-                    list.add((T)skuInfo);
-                }
-                return new AggregatedPageImpl<T>(list, pageable, response.getHits().getTotalHits());
-            }
-        });
-        //获取搜索封装信息
-        NativeSearchQuery query = builder.build();
-        Pageable pageable = query.getPageable();
-        int pageSize = pageable.getPageSize();
-        int pageNumber = pageable.getPageNumber();
-        //分页总记录数
-        long totalElements = page.getTotalElements();
-        //分页总页数
-        int pages = page.getTotalPages();
-        //结果集
-        List<SkuInfo> list = page.getContent();
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("rows", list);
-        resultMap.put("total", totalElements);
-        resultMap.put("pages", pages);
-        resultMap.put("pageSize", pageSize);
-        resultMap.put("pageNumber", pageNumber);
-        return resultMap;
-    }
+        //4.2 商品的品牌的列表展示  按照商品品牌来进行分组
+        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuBrandgroup").field("brandName").size(100));
 
-    /**
-     * 搜索条件封装
-     * @param searchMap
-     * @return
-     */
-    public NativeSearchQueryBuilder getNativeSearchQueryBuilder(Map<String, String> searchMap){
-        //执行搜索, 响应结果
-        NativeSearchQueryBuilder builder = new NativeSearchQueryBuilder();
+        //4.3 商品的规格的列表展示   按照商品的规格的字段spec 进行分组
+        //规则 要求 字段 是一个keyword类型的  spec.keyword
+        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuSpecgroup").field("spec.keyword").size(500));
+
+
+        //4.4 设置高亮的字段 设置前缀 和 后缀
+
+        //设置高亮的字段 针对 商品的名称进行高亮
+        nativeSearchQueryBuilder.withHighlightFields(new HighlightBuilder.Field("name"));
+        //设置前缀 和 后缀
+        nativeSearchQueryBuilder.withHighlightBuilder(new HighlightBuilder().preTags("<em style=\"color:red\">").postTags("</em>"));
+
+
+
+
+        //匹配查询  先分词 再查询  主条件查询
+        //参数1 指定要搜索的字段
+        //参数2 要搜索的值(先分词 再搜索)
+        //nativeSearchQueryBuilder.withQuery(QueryBuilders.matchQuery("name", keywords));
+        //从多个字段中搜索数据
+        nativeSearchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(keywords,"name","categoryName","brandName"));
+
+
+
+        //========================过滤查询 开始=====================================
+
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        //添加搜索关键词信息
-        if(searchMap != null && !searchMap.isEmpty()){
-            String keywords = searchMap.get("keywords");
-            String brandName = searchMap.get("brand");
-            String categoryName = searchMap.get("category");
-            if(StringUtils.isNotEmpty(keywords)){
-                boolQueryBuilder.must(QueryBuilders.queryStringQuery(keywords).field("name"));
-            }
-            if(StringUtils.isNotEmpty(brandName)){
-                boolQueryBuilder.must(QueryBuilders.termQuery("brandName", brandName));
-            }
-            if(StringUtils.isNotEmpty(categoryName)){
-                boolQueryBuilder.must(QueryBuilders.termQuery("categoryName", categoryName));
-            }
-            //规格过滤实现 将参数加一个前缀
-            for(Entry<String, String> entry : searchMap.entrySet()){
-                if(entry.getKey().startsWith("spec_")){
-                    String value = entry.getValue().replace("\\", "");
-                    boolQueryBuilder.must(QueryBuilders.termQuery("specMap." + entry.getKey().replaceAll("spec_", "") + ".keyword", value));
+
+        //4.4 过滤查询的条件设置   商品分类的条件
+        String category = searchMap.get("category");
+
+        if(!StringUtils.isEmpty(category)) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("categoryName", category));
+        }
+        //4.5 过滤查询的条件设置   商品品牌的条件
+        String brand = searchMap.get("brand");
+
+        if(!StringUtils.isEmpty(brand)) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("brandName", brand));
+        }
+
+        //4.6 过滤查询的条件设置   规格条件
+
+        if(searchMap!=null){
+            for (String key : searchMap.keySet()) {//{ brand:"",category:"",spec_网络:"电信4G"}
+                if(key.startsWith("spec_"))  {
+                    //截取规格的名称
+                    boolQueryBuilder.filter(QueryBuilders.termQuery("specMap."+key.substring(5)+".keyword", searchMap.get(key)));
                 }
             }
-            //价格区间
-            String price = searchMap.get("price");
-            if(StringUtils.isNotBlank(price)){
-                price = price.replaceAll("元", "").replaceAll("以上", "");
-                String[] prices = price.split("-");
-                if(StringUtils.isNotBlank(prices[0])){
-                    boolQueryBuilder.must(QueryBuilders.rangeQuery("price").gt(Integer.parseInt(prices[0])));
-                }
-                if(StringUtils.isNotBlank(prices[1])){
-                    boolQueryBuilder.must(QueryBuilders.rangeQuery("price").lt(Integer.parseInt(prices[1])));
-                }
+        }
+        //4.7 过滤查询的条件设置   价格区间的过滤查询
+        String price = searchMap.get("price");// 0-500  3000-*
+        if(!StringUtils.isEmpty(price)){
+            //获取值 按照- 切割
+            String[] split = price.split("-");
+            //过滤范围查询
+            //0<=price<=500
+            if(!split[1].equals("*")) {
+                boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").from(split[0], true).to(split[1], true));
+            }else{
+                boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").gte(split[0]));
             }
-            //排序实现
-            String sortField = searchMap.get("sortField");  //指定排序的域(type)
-            String sortRule = searchMap.get("sortRule");  //排序规则
-            if(StringUtils.isNotEmpty(sortField) && StringUtils.isNotEmpty(sortRule)){
-                builder.withSort(new FieldSortBuilder(sortField).order(SortOrder.fromString(sortRule)));
-            }
+
         }
 
 
-        //如果用户不传分页参数 默认第一页
-        Integer pageNum = coverPage(searchMap);
-        Integer PageSize = 30;
-        builder.withPageable(PageRequest.of(pageNum - 1, PageSize));
-        builder.withQuery(boolQueryBuilder);
-        return builder;
-    }
+        //过滤查询
+        nativeSearchQueryBuilder.withFilter(boolQueryBuilder);
 
-    /**
-     * 组装分页参数
-     */
-    public Integer coverPage(Map<String, String> searchMap){
-        if(searchMap != null){
-            String pageNum = searchMap.get("pageNum");
-            if(StringUtils.isNotBlank(pageNum)){
-                return Integer.parseInt(pageNum);
-            }
-            return 1;
-        }
-        return 1;
-    }
+      //========================过滤查询 结束=====================================
 
-    /**
-     * 分组查询分类集合
-     * .addAggregation();添加一个聚合操作
-     * 取别名
-     * 表示根据那个域进行查询
-     */
-    public List<String> searchCategoeyList(NativeSearchQueryBuilder builder){
-        builder.addAggregation(AggregationBuilders.terms("skuCategory").field("categoryName"));
-        AggregatedPage<SkuInfo> aggregatedPage = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
 
-        //获取分组数据
-        StringTerms skuCategory = aggregatedPage.getAggregations().get("skuCategory");
-        List<String> categoryList = new ArrayList<>();
-        for(Bucket bucket : skuCategory.getBuckets()){
-            String categoryName = bucket.getKeyAsString();//其中一个分类名称
-            categoryList.add(categoryName);
-        }
-        return categoryList;
-    }
+        //分页查询
 
-    /**
-     * 根据品牌进行分组
-     * .addAggregation();添加一个聚合操作
-     * 取别名
-     * 表示根据那个域进行查询
-     */
-    public List<String> searchBrandList(NativeSearchQueryBuilder builder){
-        builder.addAggregation(AggregationBuilders.terms("skuBrand").field("brandName"));
-        AggregatedPage<SkuInfo> aggregatedPage = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
+        //第一个参数:指定当前的页码  注意: 如果是第一页 数值为0
+        //第二个参数:指定当前的页的显示的行
+        String pageNum1 = searchMap.get("pageNum");
+        Integer pageNum=Integer.valueOf(pageNum1);
 
-        //获取分组数据
-        StringTerms skuBrand = aggregatedPage.getAggregations().get("skuBrand");
-        List<String> brandList = new ArrayList<>();
-        for(Bucket bucket : skuBrand.getBuckets()){
-            String categoryName = bucket.getKeyAsString();//其中一个分类名称
-            brandList.add(categoryName);
-        }
-        return brandList;
-    }
+        Integer pageSize=30;
 
-    /**
-     * 规格分组合并
-     * 返回格式 Map<String, List<String>>
-     */
-    public HashMap<String, Set<String>> searchSpecList(NativeSearchQueryBuilder builder){
-        builder.addAggregation(AggregationBuilders.terms("skuSpec").field("spec.keyword").size(10000));
-        AggregatedPage<SkuInfo> aggregatedPage = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
+        nativeSearchQueryBuilder.withPageable(PageRequest.of(pageNum-1,pageSize));
 
-        //获取分组数据
-        StringTerms skuSpec = aggregatedPage.getAggregations().get("skuSpec");
-        List<String> specList = new ArrayList<>();
-        for(Bucket bucket : skuSpec.getBuckets()){
-            String spec = bucket.getKeyAsString();//其中一个分类名称
-            specList.add(spec);
-        }
-        HashMap<String, Set<String>> setHashMap = new HashMap<>();
-        for(String s : specList){
-            Map<String, String> map = JSON.parseObject(s, Map.class);
-            for(Entry<String, String> entry : map.entrySet()){
-                String key = entry.getKey();
-                String value = entry.getValue();
-                //先获取当前规格数据的集合
-                Set<String> set = setHashMap.get(key);
-                if(set == null){ //表示之前还没有加进去 新new一个
-                    set = new HashSet<>();
-                }
-                set.add(value);
-                setHashMap.put(key, set);
-            }
+
+        //排序操作
+        //获取排序的字段 和要排序的规则
+        String sortField = searchMap.get("sortField");//price
+        String sortRule = searchMap.get("sortRule");//DESC ASC
+        if(!StringUtils.isEmpty(sortField) && !StringUtils.isEmpty(sortRule)) {
+            //执行排序
+            nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sortField).order(sortRule.equalsIgnoreCase("ASC")?SortOrder.ASC:SortOrder.DESC));
+            //nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sortField).order(SortOrder.valueOf(sortRule)));
         }
 
-        return setHashMap;
-    }
+        //5.构建查询对象(封装了查询的语法)
+        NativeSearchQuery nativeSearchQuery = nativeSearchQueryBuilder.build();
 
-    public Map<String, Object> searchGroup(NativeSearchQueryBuilder builder, Map<String, String> searchMap){
-        if(searchMap == null || StringUtils.isEmpty(searchMap.get("brand"))){
-            builder.addAggregation(AggregationBuilders.terms("skuBrand").field("brandName"));
-        }
-        if(searchMap == null || StringUtils.isEmpty(searchMap.get("category"))){
-            builder.addAggregation(AggregationBuilders.terms("skuCategory").field("categoryName"));
-        }
-        // builder.addAggregation(AggregationBuilders.terms("skuBrand").field("brandName"));
-        // builder.addAggregation(AggregationBuilders.terms("skuCategory").field("categoryName"));
-        builder.addAggregation(AggregationBuilders.terms("skuSpec").field("spec.keyword").size(10000));
-        AggregatedPage<SkuInfo> aggregatedPage = elasticsearchTemplate.queryForPage(builder.build(), SkuInfo.class);
+        //6.执行查询
+        AggregatedPage<SkuInfo> skuInfos = elasticsearchTemplate.queryForPage(nativeSearchQuery, SkuInfo.class,new SearchResultMapperImpl());
 
-        //定义一个map 存储所有分组结果
-        Map<String, Object> returnMap = new HashMap<>();
 
-        //获取分组数据
-        if(searchMap == null || StringUtils.isEmpty(searchMap.get("brand"))){
-            StringTerms skuBrand = aggregatedPage.getAggregations().get("skuBrand");
-            returnMap.put("brandList", getGroupList(skuBrand));
-        }
-        if(searchMap == null || StringUtils.isEmpty(searchMap.get("category"))){
-            StringTerms skuCategory = aggregatedPage.getAggregations().get("skuCategory");
-            returnMap.put("categaryList", getGroupList(skuCategory));
-        }
-        StringTerms skuSpec = aggregatedPage.getAggregations().get("skuSpec");
-        Map<String, Set<String>> stringSetMap = getStringSetMap(skuSpec);
-        returnMap.put("specList",stringSetMap);
+        // 6.2 获取聚合分组结果  获取商品分类的列表数据
+        StringTerms stringTermsCategory = (StringTerms) skuInfos.getAggregation("skuCategorygroup");
+        List<String> categoryList = getStringsCategoryList(stringTermsCategory);
 
-        return returnMap;
-    }
 
-    /**
-     * 获取分组集合数据
-     * @param stringTerms
-     * @return
-     */
-    public List<String> getGroupList(StringTerms stringTerms){
-        List<String> groupList = new ArrayList<>();
-        for(Bucket bucket : stringTerms.getBuckets()){
-            String categoryName = bucket.getKeyAsString();//其中一个分类名称
-            groupList.add(categoryName);
-        }
-        return groupList;
+        //6.3 获取 品牌分组结果 列表数据
+
+        StringTerms stringTermsBrand = (StringTerms) skuInfos.getAggregation("skuBrandgroup");
+        List<String> brandList = getStringsBrandList(stringTermsBrand);
+
+        //6.4 获取 规格的分组结果 列表数据map
+        StringTerms stringTermsSpec = (StringTerms) skuInfos.getAggregation("skuSpecgroup");
+        Map<String, Set<String>> specMap = getStringSetMap(stringTermsSpec);
+
+        //7.获取结果  返回map
+
+        List<SkuInfo> content = skuInfos.getContent();//当前的页的集合
+        int totalPages = skuInfos.getTotalPages();//总页数
+        long totalElements = skuInfos.getTotalElements();//总记录数
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("categoryList", categoryList);//商品分类的列表数据
+        resultMap.put("brandList", brandList);   //商品品牌的列表数据
+        resultMap.put("specMap", specMap);   //商品规格的列表数据展示
+        resultMap.put("rows", content);
+        resultMap.put("total", totalElements);
+        resultMap.put("totalPages", totalPages);
+        resultMap.put("pageNum",pageNum);
+        resultMap.put("pageSize",pageSize);
+        return resultMap;
     }
 
     private Map<String, Set<String>> getStringSetMap(StringTerms stringTermsSpec) {
@@ -408,5 +285,34 @@ public class SkuServiceImpl implements SkuService{
             }
         }
         return specMap;
+    }
+
+    private List<String> getStringsBrandList(StringTerms stringTermsBrand) {
+        List<String> brandList = new ArrayList<>();
+        if (stringTermsBrand != null) {
+            for (StringTerms.Bucket bucket : stringTermsBrand.getBuckets()) {
+                String keyAsString = bucket.getKeyAsString();//品牌的名称 huawei
+                brandList.add(keyAsString);
+            }
+        }
+        return brandList;
+    }
+
+    /**
+     * 获取分组结果   商品分类的分组结果
+     *
+     * @param stringTermsCategory
+     * @return
+     */
+    private List<String> getStringsCategoryList(StringTerms stringTermsCategory) {
+        List<String> categoryList = new ArrayList<>();
+        if (stringTermsCategory != null) {
+            for (StringTerms.Bucket bucket : stringTermsCategory.getBuckets()) {
+                String keyAsString = bucket.getKeyAsString();
+                System.out.println(keyAsString);//就是商品分类的数据
+                categoryList.add(keyAsString);
+            }
+        }
+        return categoryList;
     }
 }

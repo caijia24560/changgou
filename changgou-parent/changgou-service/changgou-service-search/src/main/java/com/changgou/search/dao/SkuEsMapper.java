@@ -1,8 +1,7 @@
 package com.changgou.search.dao;
 
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
-
 import com.changgou.search.pojo.SkuInfo;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 /**
  * 描述

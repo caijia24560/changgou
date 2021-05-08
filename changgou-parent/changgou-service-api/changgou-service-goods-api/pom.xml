@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>changgou-service-goods-api</artifactId>
+
     <description>
         商品微服务的POJO feign
     </description>

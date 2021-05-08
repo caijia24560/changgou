@@ -2,8 +2,8 @@ package com.changgou.goods.controller;
 import com.changgou.goods.pojo.Brand;
 import com.changgou.goods.service.BrandService;
 import com.github.pagehelper.PageInfo;
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
+import entity.Result;
+import entity.StatusCode;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -119,6 +119,13 @@ public class BrandController {
      */
     @GetMapping
     public Result<List<Brand>> findAll(){
+        try {
+            System.out.println("aaaaa=====");
+            Thread.sleep(3000);
+            System.out.println("bbbb=====");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         //调用BrandService实现查询所有Brand
         List<Brand> list = brandService.findAll();
         return new Result<List<Brand>>(true, StatusCode.OK,"查询成功",list) ;

@@ -1,21 +1,19 @@
 package com.changgou.goods.service.impl;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.changgou.goods.dao.CategoryMapper;
 import com.changgou.goods.dao.SpecMapper;
-import com.changgou.goods.dao.SpuMapper;
+import com.changgou.goods.dao.TemplateMapper;
 import com.changgou.goods.pojo.Category;
 import com.changgou.goods.pojo.Spec;
 import com.changgou.goods.service.SpecService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
+
+import java.util.List;
 
 /****
  * @Author:admin
@@ -178,6 +176,4 @@ public class SpecServiceImpl implements SpecService {
         //3.返回
         return specMapper.select(condition);//where template_id = 43
     }
-
-
 }

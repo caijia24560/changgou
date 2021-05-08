@@ -24,12 +24,12 @@ $(function () {
 //                 + "<a class='sui-btn btn-block btn-buy' href='seckill-item.html' target='_blank'>立即抢购</a>"
 //                 + "</li >"
 //             );
-
+            
 //         })
 //        }
 //    })
 
-});
+})
 //go to top
 $(document).ready(function ($) {
     var offset = 300,

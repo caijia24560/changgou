@@ -1,14 +1,13 @@
 package com.changgou.goods.controller;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
 import com.changgou.goods.pojo.Sku;
 import com.changgou.goods.service.SkuService;
 import com.github.pagehelper.PageInfo;
+import entity.Result;
+import entity.StatusCode;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /****
  * @Author:admin
@@ -111,28 +110,24 @@ public class SkuController {
     public Result<Sku> findById(@PathVariable Long id){
         //调用SkuService实现根据主键查询Sku
         Sku sku = skuService.findById(id);
-        return new Result<>(true, StatusCode.OK, "查询成功", sku);
-    }
-
-    /***
-     * 根据spuid查询Sku数据
-     * @param spuId
-     * @return
-     */
-    @GetMapping("/by-spuId/{spuId}")
-    public Result<List<Sku>> findBySpuId(@PathVariable("spuId") Long spuId){
-
-        return new Result<>(true, StatusCode.OK, "查询成功", skuService.findBySpuId(spuId));
+        return new Result<Sku>(true,StatusCode.OK,"查询成功",sku);
     }
 
     /***
      * 查询Sku全部数据
      * @return
      */
-    @GetMapping("/all")
+    @GetMapping
     public Result<List<Sku>> findAll(){
         //调用SkuService实现查询所有Sku
         List<Sku> list = skuService.findAll();
-        return new Result<>(true, StatusCode.OK, "查询成功", list) ;
+        return new Result<List<Sku>>(true, StatusCode.OK,"查询成功",list) ;
+    }
+
+    //根据状态 查询状态为1 的所有的符合条件的sku的列表数据返回
+    @GetMapping("/status/{status}")
+    public Result<List<Sku>> findByStatus(@PathVariable(name="status") String status){
+        List<Sku> skusList = skuService.findByStatus(status);
+        return new Result<List<Sku>>(true,StatusCode.OK,"查询sku列表成功",skusList);
     }
 }

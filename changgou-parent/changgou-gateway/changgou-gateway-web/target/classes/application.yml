@@ -1,39 +1,42 @@
 spring:
-  application:
-    name: gatewey-web
   cloud:
     gateway:
       globalcors:
-        cors-configurations:
-          '[/**]': #匹配所有请求
-            allowedOrigins: "*"
-            allowedMenthods:
+        corsConfigurations:
+          '[/**]': # 匹配所有请求
+            allowedOrigins: "*" #跨域处理 允许所有的域
+            allowedMethods: # 支持的方法
               - GET
               - POST
               - PUT
               - DELETE
-
       routes:
-            # 唯一标识符
-            - id: changgou_goods_route
-              #用户请求需要路由到该服务
-              #uri: http://localhost:18081
-              #lb:使用LoadBalancerClient事项负载均衡, 后面goods是微服务名称
-              uri: lb://goods
-              #路由断言, 路由规则配置
-              predicates:
-#              - Host=cloud.itheima.com**
-              - Path=/**
-              filters:
-              - StripPrefix=1
-              #局部限流过滤器
-              - name: RequestRateLimiter  #请求数限流 名称不能随便写, 使用默认的facatory
-                args:
-                  key-resolver: "#{@ipKeyResolver}"
-                  #每秒钟允许请求的个数(1个)
-                  redis-rate-limiter.replenishRate: 1
-                  #允许并发有4个请求(宽限的个数)
-                  redis-rate.limiter.burstCapacity: 4
+        - id: changgou_goods_route
+          uri: lb://goods
+          predicates:
+            - Path=/api/brand/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter #请求数限流 名字不能随便写 ，使用默认的facatory
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+        #用户微服务
+        - id: changgou_user_route
+          uri: lb://user
+          predicates:
+            - Path=/api/user/**,/api/address/**,/api/areas/**,/api/cities/**,/api/provinces/**
+          filters:
+            - StripPrefix=1
+
+  application:
+    name: gateway-web
+  #Redis配置
+  redis:
+    host: 192.168.3.127
+    port: 6379
+
 server:
   port: 8001
 eureka:

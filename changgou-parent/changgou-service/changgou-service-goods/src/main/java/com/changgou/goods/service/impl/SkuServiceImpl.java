@@ -1,17 +1,14 @@
 package com.changgou.goods.service.impl;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.changgou.goods.dao.SkuMapper;
 import com.changgou.goods.pojo.Sku;
 import com.changgou.goods.service.SkuService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
+import java.util.List;
 /****
  * @Author:admin
  * @Description:Sku业务层接口实现类
@@ -196,23 +193,19 @@ public class SkuServiceImpl implements SkuService {
     }
 
     /**
-     * 根据spuID查询Sku
-     * @param spuId
-     * @return
-     */
-    @Override
-    public List<Sku> findBySpuId(Long spuId){
-        Sku sku = new Sku();
-        sku.setSpuId(spuId);
-        return skuMapper.select(sku);
-    }
-
-    /**
      * 查询Sku全部数据
      * @return
      */
     @Override
     public List<Sku> findAll() {
         return skuMapper.selectAll();
+    }
+
+    @Override
+    public List<Sku> findByStatus(String status) {
+        //select * from sku where status=1
+        Sku condition = new Sku();
+        condition.setStatus(status);
+        return skuMapper.select(condition);
     }
 }

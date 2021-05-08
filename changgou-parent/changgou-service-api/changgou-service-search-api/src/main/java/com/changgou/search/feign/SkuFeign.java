@@ -1,11 +1,11 @@
 package com.changgou.search.feign;
 
-import java.util.Map;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Map;
 
 /**
  * 描述
@@ -19,5 +19,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/search")
 public interface SkuFeign {
     @GetMapping
-    Map<String, Object> search(@RequestParam(required = false) Map<String, String> searchMap);
+	Map search(@RequestParam(required = false) Map searchMap);
 }

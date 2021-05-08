@@ -1,15 +1,14 @@
 package com.changgou.content.controller;
 
-import java.util.List;
-
+import com.changgou.content.pojo.ContentCategory;
+import com.changgou.content.service.ContentCategoryService;
+import com.github.pagehelper.PageInfo;
+import entity.Result;
+import entity.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.changgou.content.pojo.ContentCategory;
-import com.changgou.content.service.ContentCategoryService;
-import com.changgou.entity.Result;
-import com.changgou.entity.StatusCode;
-import com.github.pagehelper.PageInfo;
+import java.util.List;
 
 /****
  * @Author:admin
@@ -36,7 +35,7 @@ public class ContentCategoryController {
     public Result<PageInfo> findPage(@RequestBody(required = false)  ContentCategory contentCategory, @PathVariable  int page, @PathVariable  int size){
         //调用ContentCategoryService实现分页条件查询ContentCategory
         PageInfo<ContentCategory> pageInfo = contentCategoryService.findPage(contentCategory, page, size);
-        return new Result(true, StatusCode.OK,"查询成功",pageInfo);
+        return new Result(true,StatusCode.OK,"查询成功",pageInfo);
     }
 
     /***

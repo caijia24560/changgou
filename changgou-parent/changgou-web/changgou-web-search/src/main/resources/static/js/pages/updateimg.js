@@ -19,7 +19,7 @@
 			}　　
 			return pwd;
 		}
-		console.log();
+		console.log()
 		if (typeof FileReader === 'undefined') {
 			alert("抱歉，你的浏览器不支持 FileReader");
 			input.setAttribute('disabled', 'disabled');
@@ -46,7 +46,7 @@
 					var imgMsg = {
 						name: randomString(5), //获取文件名
 						base64: this.result, //reader.readAsDataURL方法执行完后，base64数据储存在reader.result里
-					};
+					}
 					dataArr.push(imgMsg);
 					for (var j = 0; j < dataArr.length; j++) {
 						currentReViewImgIndex = j
@@ -70,11 +70,11 @@
 
 				}
 			}
+			
 
+			
 
-
-
-
+			
 
 
 
@@ -93,7 +93,7 @@
 							}
 							var up = num - 1;
 							dataArr.splice(up, 0, dataArr[num]);
-							dataArr.splice(num + 1, 1);
+							dataArr.splice(num + 1, 1)
 							var lists = $("ul#showui li").length;
 							for (var j = 0; j < lists; j++) {
 								var usid = $("ul#showui li")[j].getElementsByTagName('img')[3];
@@ -101,7 +101,7 @@
 							}
 						}
 					}
-				}(i);
+				}(i)
 				//删除图标
 				lilength[i].getElementsByTagName('img')[1].onclick = function (num) {
 					return function () {
@@ -109,12 +109,12 @@
 							dataArr = [];
 							$("ul#showui").html("")
 						} else {
-							$("ul#showui li:eq(" + num + ")").remove();
+							$("ul#showui li:eq(" + num + ")").remove()
 							dataArr.splice(num, 1)
 						}
 
 					}
-				}(i);
+				}(i)
 				//右箭头图标
 				lilength[i].getElementsByTagName('img')[2].onclick = function (num) {
 					return function () {
@@ -124,7 +124,7 @@
 						}
 						var datalist = list + 1;
 						dataArr.splice(datalist, 0, dataArr[num]);
-						dataArr.splice(num, 1);
+						dataArr.splice(num, 1)
 						var lists = $("ul#showui li").length;
 						for (var j = 0; j < lists; j++) {
 							var usid = $("ul#showui li")[j].getElementsByTagName('img')[3];
@@ -138,7 +138,7 @@
 		}
 		showui.addEventListener("click", function () {
 			onclickimg();
-		}, true);
+		}, true)
 
 		function send() {
 			for (var j = 0; j < dataArr.length; j++) {
@@ -146,6 +146,6 @@
 			}
 		}
 
+		
 
-
-	};
+	}

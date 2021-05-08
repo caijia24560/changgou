@@ -1,8 +1,7 @@
 package com.changgou.goods.service;
-import java.util.List;
-
 import com.changgou.goods.pojo.Sku;
 import com.github.pagehelper.PageInfo;
+import java.util.List;
 /****
  * @Author:admin
  * @Description:Sku业务层接口
@@ -59,16 +58,16 @@ public interface SkuService {
      */
      Sku findById(Long id);
 
-    /**
-     * 根据spuID查询Sku
-     * @param spuId
-     * @return
-     */
-    List<Sku> findBySpuId(Long spuId);
-
     /***
      * 查询所有Sku
      * @return
      */
     List<Sku> findAll();
+
+    /**
+     * 查询符合条件的eSKU的列表数据
+     * @param status
+     * @return
+     */
+    List<Sku> findByStatus(String status);
 }

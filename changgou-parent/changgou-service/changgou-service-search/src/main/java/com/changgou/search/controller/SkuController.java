@@ -1,12 +1,12 @@
 package com.changgou.search.controller;
 
-import java.util.Map;
-
+import com.changgou.search.service.SkuService;
+import entity.Result;
+import entity.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.changgou.entity.Result;
-import com.changgou.search.service.SkuService;
+import java.util.Map;
 
 /**
  * controller
@@ -27,10 +27,10 @@ public class SkuController {
     private SkuService skuService;
 
     @RequestMapping("/import")
-    public Result importData() {
+    public Result importEs() {
 
-        skuService.importData();
-        return new Result(true, entity.StatusCode.OK, "导入成功");
+        skuService.importEs();
+        return new Result(true, StatusCode.OK, "导入成功");
     }
 
     /**
@@ -39,7 +39,15 @@ public class SkuController {
      * @return  resultMap  返回的结果 map
      */
     @GetMapping
-    public Map<String,Object> search(@RequestParam(required = false) Map<String,String> searchMap){
+    public Map search(@RequestParam(required = false) Map searchMap){
+        Object pageNum = searchMap.get("pageNum");
+        if(pageNum==null){
+            searchMap.put("pageNum","1");
+        }
+        if(pageNum instanceof Integer){
+            searchMap.put("pageNum",pageNum.toString());
+        }
+
        return  skuService.search(searchMap);
     }
 }
